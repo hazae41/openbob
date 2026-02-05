@@ -3,7 +3,7 @@
 Use accounts with Ed25519 signatures and incrementing nonce
 
 ```tsx
-b7e318bf4bce6b5a6894651bbc594a0c4563aed28937c8de9bfef4e85b6bd9c0
+ebd3b654bb89fe0b5dca2e7b6e345388748bd3fcf6ba10cdba270d0016e1a18a
 ```
 
 ## Demo
