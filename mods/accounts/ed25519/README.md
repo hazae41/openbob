@@ -17,7 +17,7 @@ npm run prepack && npm run produce
 Generate a keypair (it will display your sigkey, pubkey, and address)
 
 ```bash
-npm run generate
+npm run generate <module>
 ```
 
 Execute a signed call to some submodule accepting a session
