@@ -1,36 +1,57 @@
 import { bigintref, bigints, blobs, modules, packref, packs, sha256, storage, textref, texts } from "@hazae41/stdbob"
 import { addresses } from "./libs/address/mod"
 
-namespace owner {
+namespace storages {
 
-  export function get(): textref {
-    const found = storage.get(texts.fromString("owner"))
+  export namespace init {
 
-    if (!found)
-      return texts.fromString("0000000000000000000000000000000000000000000000000000000000000000")
+    export function get(): bool {
+      const found = storage.get(texts.fromString("init"))
 
-    return packs.get<textref>(found, 0)
+      if (!found)
+        return false
+
+      return true
+    }
+
+    export function set(): void {
+      storage.set(texts.fromString("init"), true)
+    }
+
   }
 
-  export function set(address: textref): void {
-    storage.set(texts.fromString("owner"), address)
+  export namespace owner {
+
+    export function get(): textref {
+      const found = storage.get(texts.fromString("owner"))
+
+      if (!found)
+        return null
+
+      return packs.get<textref>(found, 0)
+    }
+
+    export function set(address: textref): void {
+      storage.set(texts.fromString("owner"), address)
+    }
+
   }
 
-}
+  export namespace balances {
 
-namespace balances {
+    export function get(address: textref): bigintref {
+      const found = storage.get(packs.create2(texts.fromString("balance"), address))
 
-  export function get(address: textref): bigintref {
-    const found = storage.get(packs.create2(texts.fromString("balance"), address))
+      if (!found)
+        return bigints.zero()
 
-    if (!found)
-      return bigints.zero()
+      return packs.get<bigintref>(found, 0)
+    }
 
-    return packs.get<bigintref>(found, 0)
-  }
+    export function set(address: textref, value: bigintref): void {
+      storage.set(packs.create2(texts.fromString("balance"), address), value)
+    }
 
-  export function set(address: textref, value: bigintref): void {
-    storage.set(packs.create2(texts.fromString("balance"), address), value)
   }
 
 }
@@ -41,12 +62,17 @@ namespace balances {
  * @returns nothing
  */
 export function init(creator: textref): void {
+  if (storages.init.get())
+    throw new Error()
+
   const module = blobs.toBase16(sha256.digest(blobs.encode(packs.create2(modules.load(modules.self()), packs.create1(creator)))))
 
   if (!texts.equals(modules.self(), module))
-    throw new Error("Invalid module integrity")
+    throw new Error()
 
-  owner.set(creator)
+  storages.owner.set(creator)
+
+  storages.init.set()
 }
 
 /**
@@ -55,7 +81,7 @@ export function init(creator: textref): void {
  * @returns i64
  */
 export function balance(target: textref): bigintref {
-  return balances.get(target)
+  return storages.balances.get(target)
 }
 
 /**
@@ -67,10 +93,10 @@ export function balance(target: textref): bigintref {
 export function mint(session: packref, target: textref, amount: bigintref): void {
   const caller = addresses.verify(session)
 
-  if (!texts.equals(caller, owner.get()))
-    throw new Error("Unauthorized")
+  if (!texts.equals(caller, storages.owner.get()))
+    throw new Error()
 
-  balances.set(target, bigints.add(balances.get(target), amount))
+  storages.balances.set(target, bigints.add(storages.balances.get(target), amount))
 
   storage.set(texts.fromString("mint"), packs.create2(target, amount))
 }
@@ -84,14 +110,14 @@ export function mint(session: packref, target: textref, amount: bigintref): void
 export function transfer(session: packref, target: textref, amount: bigintref): void {
   const caller = addresses.verify(session)
 
-  const bsender = balances.get(caller)
-  const btarget = balances.get(target)
+  const bsender = storages.balances.get(caller)
+  const btarget = storages.balances.get(target)
 
   if (bigints.lt(bsender, amount)) // bsender < amount
-    throw new Error("Insufficient balance")
+    throw new Error()
 
-  balances.set(caller, bigints.sub(bsender, amount))
-  balances.set(target, bigints.add(btarget, amount))
+  storages.balances.set(caller, bigints.sub(bsender, amount))
+  storages.balances.set(target, bigints.add(btarget, amount))
 
   storage.set(texts.fromString("transfer"), packs.create3(caller, target, amount))
 }

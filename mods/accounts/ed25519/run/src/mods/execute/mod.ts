@@ -18,7 +18,7 @@ async function execute<T extends Packable = Packable>(module: string, method: st
   body.append("module", module)
   body.append("method", method)
   body.append("params", new Blob([Writable.writeToBytesOrThrow(new Packed(params))]))
-  body.append("effort", new Blob([await generate(2n ** 19n)]))
+  body.append("effort", new Blob([await generate(2n ** BigInt(process.env.EFFORT))]))
 
   const response = await fetch(new URL("/api/execute", process.env.SERVER), { method: "POST", body });
 
@@ -103,10 +103,7 @@ const pubkeyAsRaw = Uint8Array.fromHex(pubkeyAsHex)
 
 const sigkeyAsRef = await crypto.subtle.importKey("pkcs8", sigkeyAsRaw, "Ed25519", true, ["sign"])
 
-const encodedAsRaw = Writable.writeToBytesOrThrow(new Packed([module, pubkeyAsRaw]))
-const addressAsRaw = new Uint8Array(await crypto.subtle.digest("SHA-256", encodedAsRaw))
-
-const nonce = await execute<bigint>(module, "get_nonce", [addressAsRaw.toHex()])
+const nonce = await execute<bigint>(module, "nonce", [pubkeyAsRaw])
 
 const message = Writable.writeToBytesOrThrow(new Packed([process.env.UUID, submodule, submethod, parse(subparams), nonce]))
 

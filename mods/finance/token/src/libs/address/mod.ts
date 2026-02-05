@@ -6,7 +6,7 @@ export namespace addresses {
     const module = packs.get<textref>(session, 0)
 
     if (!packs.get<bool>(modules.call(module, texts.fromString("verify"), packs.create1(session)), 0))
-      throw new Error("Invalid session")
+      throw new Error()
 
     if (packs.length(session) === 1)
       return module

@@ -1,3 +1,3 @@
 # OpenBob
 
-Directory of Bobine module standards
+Directory of standardized Bobine modules

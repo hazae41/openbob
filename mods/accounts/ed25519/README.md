@@ -3,7 +3,7 @@
 Use accounts with Ed25519 signatures and incrementing nonce
 
 ```tsx
-ebd3b654bb89fe0b5dca2e7b6e345388748bd3fcf6ba10cdba270d0016e1a18a
+713915c6280a3d9bd6c580febfff0736eb1d86e380184288f6158eea18032090
 ```
 
 ## Demo
@@ -41,7 +41,7 @@ namespace addresses {
     const module = packs.get<textref>(session, 0)
 
     if (!packs.get<bool>(modules.call(module, texts.fromString("verify"), packs.create1(session)), 0))
-      throw new Error("Invalid session")
+      throw new Error()
 
     if (packs.length(session) === 1)
       return module
