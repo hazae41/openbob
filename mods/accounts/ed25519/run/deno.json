@@ -7,6 +7,7 @@
   "lint": {
     "rules": {
       "exclude": [
+        "no-namespace",
         "no-unused-vars"
       ]
     }
