@@ -1,5 +1,3 @@
-// deno-lint-ignore-file no-unused-vars
-
 /// <reference types="@/libs/bytes/lib.d.ts"/>
 
 import { generate } from "@/libs/effort/mod.ts";
@@ -105,7 +103,7 @@ const sigkeyAsRef = await crypto.subtle.importKey("pkcs8", sigkeyAsRaw, "Ed25519
 
 const nonce = await execute<bigint>(module, "nonce", [pubkeyAsRaw])
 
-const message = Writable.writeToBytesOrThrow(new Packed([process.env.UUID, submodule, submethod, parse(subparams), nonce]))
+const message = Writable.writeToBytesOrThrow(new Packed([process.env.CHAIN, submodule, submethod, parse(subparams), nonce]))
 
 const signature = new Uint8Array(await crypto.subtle.sign("Ed25519", sigkeyAsRef, message))
 

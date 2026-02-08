@@ -1,4 +1,4 @@
-/// <reference types="../../libs/bytes/lib.d.ts"/>
+/// <reference types="@/libs/bytes/lib.d.ts"/>
 
 import { generate } from "@/libs/effort/mod.ts";
 import { Packable, Packed } from "@/libs/packed/mod.ts";

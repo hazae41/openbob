@@ -1,5 +1,3 @@
-// deno-lint-ignore-file no-unused-vars
-
 /// <reference types="@/libs/bytes/lib.d.ts"/>
 
 import { generate } from "@/libs/effort/mod.ts";
