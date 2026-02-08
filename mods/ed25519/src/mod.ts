@@ -37,7 +37,7 @@ export function call(module: textref, method: textref, params: packref, pubkey: 
   const message = blobs.encode(packs.create5(env.uuid(), module, method, params, nonce))
 
   if (!ed25519.verify(pubkey, signature, message) && env.mode === 1)
-    throw new Error()
+    return env.panic<packref>(texts.fromString("Invalid signature"))
 
   storages.nonces.set(pubkey, bigints.add(nonce, bigints.one()))
 

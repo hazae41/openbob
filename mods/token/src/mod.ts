@@ -1,4 +1,4 @@
-import { bigintref, bigints, blobs, modules, packref, packs, sha256, storage, textref, texts } from "@hazae41/stdbob"
+import { bigintref, bigints, blobs, env, modules, packref, packs, sha256, storage, textref, texts } from "@hazae41/stdbob"
 import { addresses } from "./libs/address/mod"
 
 namespace storages {
@@ -63,12 +63,12 @@ namespace storages {
  */
 export function init(creator: textref): void {
   if (storages.init.get())
-    throw new Error()
+    return env.panic<void>(texts.fromString("Already initialized"))
 
   const module = blobs.toBase16(sha256.digest(blobs.encode(packs.create2(modules.load(modules.self()), packs.create1(creator)))))
 
   if (!texts.equals(modules.self(), module))
-    throw new Error()
+    return env.panic<void>(texts.fromString("Invalid integrity"))
 
   storages.owner.set(creator)
 
@@ -94,7 +94,7 @@ export function mint(session: packref, target: textref, amount: bigintref): void
   const caller = addresses.verify(session)
 
   if (!texts.equals(caller, storages.owner.get()))
-    throw new Error()
+    return env.panic<void>(texts.fromString("Unauthorized"))
 
   storages.balances.set(target, bigints.add(storages.balances.get(target), amount))
 
@@ -114,7 +114,7 @@ export function transfer(session: packref, target: textref, amount: bigintref): 
   const btarget = storages.balances.get(target)
 
   if (bigints.lt(bsender, amount)) // bsender < amount
-    throw new Error()
+    return env.panic<void>(texts.fromString("Insufficient balance"))
 
   storages.balances.set(caller, bigints.sub(bsender, amount))
   storages.balances.set(target, bigints.add(btarget, amount))
