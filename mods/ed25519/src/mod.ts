@@ -1,25 +1,5 @@
-import { bigintref, bigints, blobref, blobs, ed25519, env, modules, packref, packs, refs, storage, textref, texts } from "@hazae41/stdbob"
-
-namespace storages {
-
-  export namespace nonces {
-
-    export function get(pubkey: blobref): bigintref {
-      const found = storage.get(packs.create2(texts.fromString("nonce"), pubkey))
-
-      if (!found)
-        return bigints.zero()
-
-      return packs.get<bigintref>(found, 0)
-    }
-
-    export function set(pubkey: blobref, value: bigintref): void {
-      storage.set(packs.create2(texts.fromString("nonce"), pubkey), value)
-    }
-
-  }
-
-}
+import { bigintref, bigints, blobref, blobs, ed25519, env, modules, packref, packs, refs, textref, texts } from "@hazae41/stdbob"
+import { storages } from "./libs/storages/mod"
 
 const sessions = new Set<usize>()
 
