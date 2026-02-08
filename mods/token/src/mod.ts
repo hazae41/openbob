@@ -81,6 +81,7 @@ export function mint(session: packref, target: textref, amount: bigintref): void
     return env.panic<void>(texts.fromString("Unauthorized"))
 
   storages.balances.set(target, bigints.add(storages.balances.get(target), amount))
+
   storages.supply.set(bigints.add(storages.supply.get(), amount))
 
   storage.set(texts.fromString("mint"), packs.create2(target, amount))
@@ -101,6 +102,7 @@ export function burn(session: packref, amount: bigintref): void {
     return env.panic<void>(texts.fromString("Insufficient balance"))
 
   storages.balances.set(caller, bigints.sub(bcaller, amount))
+
   storages.supply.set(bigints.sub(storages.supply.get(), amount))
 
   storage.set(texts.fromString("burn"), packs.create2(caller, amount))
