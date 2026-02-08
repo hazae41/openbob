@@ -5,12 +5,12 @@ import { Packable, Packed } from "@/libs/packed/mod.ts";
 import { Readable, Writable } from "@hazae41/binary";
 import process from "node:process";
 
-process.loadEnvFile("../../../.env.local")
-process.loadEnvFile("../../../.env")
+process.loadEnvFile("../../.env.local")
+process.loadEnvFile("../../.env")
 
 type Proof = [Array<string>, Array<[string, Uint8Array, Uint8Array]>, Array<[string, Uint8Array, Uint8Array]>, Packable, bigint]
 
-async function execute<T extends Packable = Packable>(module: string, method: string, params: Array<Packable>) {
+async function execute(module: string, method: string, params: Array<Packable>) {
   const body = new FormData()
 
   body.append("module", module)
@@ -28,7 +28,7 @@ async function execute<T extends Packable = Packable>(module: string, method: st
   for (const log of logs)
     console.log(log)
 
-  return returned as T
+  return returned
 }
 
 function parse(texts: string[]): Array<Packable> {
@@ -94,17 +94,6 @@ function jsonify(value: Packable): unknown {
   throw new Error("Unknown value type")
 }
 
-const [module, sigkeyAsHex, pubkeyAsHex, submodule, submethod, ...subparams] = process.argv.slice(2)
+const [module, method, ...params] = process.argv.slice(2)
 
-const sigkeyAsRaw = Uint8Array.fromHex(sigkeyAsHex)
-const pubkeyAsRaw = Uint8Array.fromHex(pubkeyAsHex)
-
-const sigkeyAsRef = await crypto.subtle.importKey("pkcs8", sigkeyAsRaw, "Ed25519", true, ["sign"])
-
-const nonce = await execute<bigint>(module, "nonce", [pubkeyAsRaw])
-
-const message = Writable.writeToBytesOrThrow(new Packed([process.env.CHAIN, submodule, submethod, parse(subparams), nonce]))
-
-const signature = new Uint8Array(await crypto.subtle.sign("Ed25519", sigkeyAsRef, message))
-
-console.log(jsonify(await execute(module, "call", [submodule, submethod, parse(subparams), pubkeyAsRaw, signature])))
+console.log(jsonify(await execute(module, method, parse(params))))

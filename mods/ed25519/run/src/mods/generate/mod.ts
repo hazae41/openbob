@@ -4,8 +4,8 @@ import { Packed } from "@/libs/packed/mod.ts";
 import { Writable } from "@hazae41/binary";
 import process from "node:process";
 
-process.loadEnvFile("../../../.env.local")
-process.loadEnvFile("../../../.env")
+process.loadEnvFile("../../.env.local")
+process.loadEnvFile("../../.env")
 
 const [module] = process.argv.slice(2)
 
