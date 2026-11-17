@@ -13,7 +13,7 @@ async function execute(server: string, module: string, method: string, params: A
   body.append("module", module)
   body.append("method", method)
   body.append("params", new Blob([Writable.writeToBytes(new Packed(params))]))
-  body.append("effort", new Blob([await generate(2n ** 100n)]))
+  body.append("effort", new Blob([await generate(2n ** 8n)]))
 
   const response = await fetch(new URL("/api/execute", server), { method: "POST", body });
 

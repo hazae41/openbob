@@ -39,7 +39,7 @@ function parse(texts: string[]): Array<Packable> {
   return values
 }
 
-const [server, file, ...params] = process.argv.slice(2)
+const [file, server, ...params] = process.argv.slice(2)
 
 const body = new FormData()
 
