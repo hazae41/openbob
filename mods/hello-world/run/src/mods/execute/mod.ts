@@ -9,37 +9,41 @@ import process from "node:process";
 type Proof = [Array<string>, Array<[string, Uint8Array, Uint8Array]>, Array<[string, Uint8Array, Uint8Array]>, Packable, bigint]
 
 async function execute(server: string, module: string, method: string, params: Array<Packable>) {
-  const headers = { "Content-Type": "application/json" }
+  for (let target = 1n; true; target *= 2n) {
+    const headers = { "Content-Type": "application/json" }
 
-  const paramsAsRaw = Writable.writeToBytes(new Packed(params))
-  const effortAsRaw = await generate(2n ** 10n)
+    const paramsAsRaw = Writable.writeToBytes(new Packed(params))
+    const effortAsRaw = await generate(target)
 
-  const paramsAsHex = paramsAsRaw.toHex()
-  const effortAsHex = effortAsRaw.toHex()
+    const paramsAsHex = paramsAsRaw.toHex()
+    const effortAsHex = effortAsRaw.toHex()
 
-  const subrequest = { method: "bob_execute", params: [module, method, paramsAsHex, effortAsHex] }
+    const subrequest = { method: "bob_execute", params: [module, method, paramsAsHex, effortAsHex] }
 
-  const response = await fetch(server, { method: "POST", headers, body: JSON.stringify(subrequest) })
+    const response = await fetch(server, { method: "POST", headers, body: JSON.stringify(subrequest) })
 
-  if (!response.ok)
-    throw new Error("Failed to fetch", { cause: response })
+    if (!response.ok)
+      throw new Error("Failed to fetch", { cause: response })
 
-  const subresponse = RpcResponse.from<string>(await response.json())
+    const subresponse = RpcResponse.from<string>(await response.json())
 
-  if (!subresponse.isOk())
-    throw subresponse.getErr()
+    if (!subresponse.isOk() && subresponse.getErr().code === -32002)
+      continue
+    if (!subresponse.isOk())
+      throw subresponse.getErr()
 
-  const resultAsHex = subresponse.get()
-  const resultAsRaw = Uint8Array.fromHex(resultAsHex)
+    const resultAsHex = subresponse.get()
+    const resultAsRaw = Uint8Array.fromHex(resultAsHex)
 
-  const packed = Readable.readFromBytes(Packed, resultAsRaw)
+    const packed = Readable.readFromBytes(Packed, resultAsRaw)
 
-  const [logs, reads, writes, returned, sparks] = packed as Proof
+    const [logs, reads, writes, returned, sparks] = packed as Proof
 
-  for (const log of logs)
-    console.log(log)
+    for (const log of logs)
+      console.log(log)
 
-  return returned
+    return returned
+  }
 }
 
 function parse(texts: string[]): Array<Packable> {
