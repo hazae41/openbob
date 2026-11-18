@@ -3,24 +3,38 @@
 import { generate } from "@/libs/effort/mod.ts";
 import { Packable, Packed } from "@/libs/packed/mod.ts";
 import { Readable, Writable } from "@hazae41/binary";
+import { RpcResponse } from "@hazae41/jsonrpc";
 import process from "node:process";
 
 type Proof = [Array<string>, Array<[string, Uint8Array, Uint8Array]>, Array<[string, Uint8Array, Uint8Array]>, Packable, bigint]
 
 async function execute(server: string, module: string, method: string, params: Array<Packable>) {
-  const body = new FormData()
+  const headers = { "Content-Type": "application/json" }
 
-  body.append("module", module)
-  body.append("method", method)
-  body.append("params", new Blob([Writable.writeToBytes(new Packed(params))]))
-  body.append("effort", new Blob([await generate(2n ** 8n)]))
+  const paramsAsRaw = Writable.writeToBytes(new Packed(params))
+  const effortAsRaw = await generate(2n ** 10n)
 
-  const response = await fetch(new URL("/api/execute", server), { method: "POST", body });
+  const paramsAsHex = paramsAsRaw.toHex()
+  const effortAsHex = effortAsRaw.toHex()
+
+  const subrequest = { method: "bob_execute", params: [module, method, paramsAsHex, effortAsHex] }
+
+  const response = await fetch(server, { method: "POST", headers, body: JSON.stringify(subrequest) })
 
   if (!response.ok)
-    throw new Error("Failed", { cause: response })
+    throw new Error("Failed to fetch", { cause: response })
 
-  const [logs, reads, writes, returned, sparks] = Readable.readFromBytes(Packed, await response.bytes()) as Proof
+  const subresponse = RpcResponse.from<string>(await response.json())
+
+  if (!subresponse.isOk())
+    throw subresponse.getErr()
+
+  const resultAsHex = subresponse.get()
+  const resultAsRaw = Uint8Array.fromHex(resultAsHex)
+
+  const packed = Readable.readFromBytes(Packed, resultAsRaw)
+
+  const [logs, reads, writes, returned, sparks] = packed as Proof
 
   for (const log of logs)
     console.log(log)

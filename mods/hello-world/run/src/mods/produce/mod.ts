@@ -1,6 +1,7 @@
 import { generate } from "@/libs/effort/mod.ts";
 import { Packable, Packed } from "@/libs/packed/mod.ts";
 import { Writable } from "@hazae41/binary";
+import { RpcResponse } from "@hazae41/jsonrpc";
 import { readFileSync } from "node:fs";
 import process from "node:process";
 
@@ -41,21 +42,27 @@ function parse(texts: string[]): Array<Packable> {
 
 const [file, server, ...params] = process.argv.slice(2)
 
-const body = new FormData()
+const headers = { "Content-Type": "application/json" }
 
-const codeAsBytes = readFileSync(file)
-const saltAsBytes = Writable.writeToBytes(new Packed(parse(params)))
+const codeAsRaw = readFileSync(file)
+const codeAsHex = codeAsRaw.toHex()
 
-body.append("code", new Blob([codeAsBytes]))
-body.append("salt", new Blob([saltAsBytes]))
+const saltAsRaw = Writable.writeToBytes(new Packed(parse(params)))
+const saltAsHex = saltAsRaw.toHex()
 
-const effortAsBytes = await generate(codeAsBytes.length + saltAsBytes.length)
+const effortAsRaw = await generate(codeAsRaw.length + saltAsRaw.length)
+const effortAsHex = effortAsRaw.toHex()
 
-body.append("effort", new Blob([effortAsBytes]))
+const subrequest = { method: "bob_create", params: [codeAsHex, saltAsHex, effortAsHex] }
 
-const response = await fetch(new URL("/api/create", server), { method: "POST", body });
+const response = await fetch(new URL("/api/create", server), { method: "POST", headers, body: JSON.stringify(subrequest) });
 
 if (!response.ok)
-  throw new Error("Failed", { cause: response })
+  throw new Error("Failed to fetch", { cause: response })
 
-console.log(await response.json())
+const subresponse = RpcResponse.from<string>(await response.json())
+
+if (!subresponse.isOk())
+  throw subresponse.getErr()
+
+console.log(subresponse.get())
